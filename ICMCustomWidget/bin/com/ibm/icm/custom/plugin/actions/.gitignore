@@ -1,0 +1,15 @@
+/ICMBulkUploadAction.class
+/ICMConfigCaseAction.class
+/ICMCreateCaseAction.class
+/ICMDeleteDocumentAction.class
+/ICMDispatchItemFromCaseSearchAction.class
+/ICMDispatchItemFromInbasket.class
+/ICMDownloadTemplate.class
+/ICMExportCaseAction.class
+/ICMExportCaseSearchAction.class
+/ICMExportCaseSummary.class
+/ICMGeneratePropertiesExcelAction.class
+/ICMPrintCaseAction.class
+/ICMReopenTask.class
+/ICMTerminateTaskAction.class
+/ICMUnlockWorkitemAction.class
