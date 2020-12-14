@@ -16,8 +16,9 @@ define([
     "dojo/store/Memory", "gridx/modules/CellWidget",
     "gridx/modules/dnd/Row", "gridx/modules/Sort",
     "dojo/aspect",
-    "dojo/dom-attr", "dojo/request/xhr", "dojo/dom", "dojo/on",
+    "dojo/dom-attr", "dojo/request", "dojo/request/xhr", "dojo/dom", "dojo/on",
     "dojo/mouse",
+    
     "dojo/domReady!"
 ], function(declare, Action, domStyle, Button, lang,
     array, parser, cells, ToolbarSeparator,
@@ -26,12 +27,11 @@ define([
     Layout, domConstruct,
     Toolbar, PropertyTable, domClass, ObjectStore,
     Memory, CellWidget, Row, Sort, aspect,
-    domAttr, xhr, dom, on, mouse) {
+    domAttr, request, xhr, dom, on, mouse) {
 
     return declare("icmcustom.action.ICMGeneratePropertiesExcelAction", [Action], {
-        solution: null,
-
-        isEnabled: function() {
+       
+    	isEnabled: function() {
 
             var Solution = this.getActionContext("Solution");
             if (Solution === null || Solution.length == 0) {
@@ -43,9 +43,8 @@ define([
         },
         execute: function() {
             var store;
-            this.caseType = this.propertiesValue.caseType;
-            this.caseProperties = this.propertiesValue.caseProperties;
-
+            const xlsx = require('xlsx');
+            var solution = ecm.model.desktop.currentSolution;
             this.htmlTemplate = this.buildHtmlTemplate();
             var caseTypeDrop;
             var caseTypeValue;
@@ -66,9 +65,7 @@ define([
                 cancelButtonLabel: "Cancel",
                 contentString: this.htmlTemplate,
 
-                createGrid: function() {
-
-                    var solution = ecm.model.desktop.currentSolution;
+                createGrid: function() {                   
                     var caseType = solution.getCaseTypes();
                     var caseTyepList = [];
                     var data = {
@@ -116,6 +113,7 @@ define([
                     this.executeCESearch("tos", ceQuery, false, value);
 
                 },
+                
                 executeCESearch: function(repositoryId, ceQuery, execute, fileNameValue) {
 
                     this._repositoryId = repositoryId;
@@ -139,44 +137,25 @@ define([
                             isDocumentAvailable = true;
                             
                             var itemUrl = documentObj[0].getContentUrl();
-
-                            xhrArgs = {
-                                url: itemUrl,
-                                handleAs: "text",
-                                sync: true,
-                                headers: {
-                                    "Content-Type": "application/json"
-                                },
-                                error: function(error) {
-
-                                    alert("Error occured during getting users from role. Please contact administrator");
-                                    console.log("Error occured during getting users from role. Please contact administrator" + error);
-                                }
+                            var request = new XMLHttpRequest();
+                            request.open('GET', itemUrl, true);
+                            request.responseType = 'blob';
+                            request.onload = function() {
+                                var reader = new FileReader();
+                                reader.readAsBinaryString(request.response);
+                                reader.onload =  function(e){
+                                	var workbook = xlsx.read(e.target.result,{type: 'binary'});
+                                    var Sheet = workbook.SheetNames[0];
+                                    var excelRows = xlsx.utils.sheet_to_csv(workbook.Sheets[Sheet]);
+                                    props = excelRows.split(",");
+                                };
                             };
-
-                            var deferred = dojo.xhrGet(xhrArgs);
-                            var content = deferred.results;
-                            var htmlFileTemplate = content[0];
-                            var doc = new DOMParser().parseFromString(htmlFileTemplate, 'text/html');
-                            var x = doc.querySelectorAll("td");
-                            var i;
-                            for (i = 0; i < x.length; i++) {
-                            	if(x[i].innerHTML.includes('*')){
-                                	x[i].innerHTML = x[i].innerHTML.replace(/\* *\([^)]*\) */g, "");
-                                	props[i] = x[i].innerHTML.trim();
-                                }
-                            	else{
-                              props[i]=x[i].innerHTML.replace(/ *\([^)]*\) */g,"").trim();
-                            	}
-                            	
-                        }
+                            request.send();
                     }
                     }), sortBy, sortAsc, null, function(error) {
 
                         console.log(error);
                     });
-
-
                 },
                 onExecute: function() {
                     this.htmlTemplate = this.buildHtmlTemplate1();
@@ -198,9 +177,9 @@ define([
 
                             var propData = {
                                 items: []
-                            };
-                            var solution = ecm.model.desktop.currentSolution;
+                            };                            
                             var caseTypes = solution.caseTypes;
+                            var prefix= solution.prefix;
                             for (var i = 0; i < caseTypes.length; i++) {
                                 if (caseTypes[i].id == caseTypeValue) {
                                     var propdata_list = caseTypes[i].solution.attributeDefinitions;
@@ -209,7 +188,7 @@ define([
                                         var propSymbolicName = propdata_list[i].symbolicName;
                                         if (propSymbolicName.includes("_")) {
                                             var propList = propSymbolicName.split("_");
-                                            if (propList[0] == "LA") {
+                                            if (propList[0] == prefix) {
                                                 propData.items.push(propdata_list[i]);
                                             }
                                         }
@@ -227,7 +206,12 @@ define([
                                     		nonReqProps.items.push(propData.items[y]);
                                     	}
                                     }
-                                    
+                                    for(var l=0;l<propData.items.length;l++){
+                                    	var present = props.findIndex(function(a){ return a.includes(propData.items[l].symbolicName)});
+                                    	if(present >= 0){
+                                    		props[present]=propData.items[l].symbolicName;
+                                    	}
+                                    }
                                     var data = {
                                             identifier: "id",
                                             items: []
@@ -434,36 +418,38 @@ define([
                             grid.startup();
                         },
                         onSave: function() {
-                            var value = "";
-
+                            var value = [];
+                            var temp = "";
                             function completed(items, request) {
 
                                 for (var i = 0; i < items.length; i++) {
                                 	if(store.getValue(items[i],"pname")&&store.getValue(items[i],"sname")){
                                 	if(store.getValue(items[i], "isreq")==true && store.getValue(items[i],"dtype")=="datetime" ){
-                                		value += store.getValue(items[i], "sname");
-                                        value += " * (";
-                                        value += store.getValue(items[i], "dtype");
-                                        value += " mm/dd/yy),"
+                                		temp += store.getValue(items[i], "sname");
+                                        temp += " * (";
+                                        temp += store.getValue(items[i], "dtype");
+                                        temp += " mm/dd/yy)"
                                 	}
                                 	else if(store.getValue(items[i], "isreq")==true){
-                               		 value += store.getValue(items[i], "sname");
-                                     value += " * ("
-                                     value += store.getValue(items[i], "dtype");
-                                     value += " ),";
+                               		 temp += store.getValue(items[i], "sname");
+                                     temp += " * ("
+                                     temp += store.getValue(items[i], "dtype");
+                                     temp += " )";
                             	}
                                 	else if(store.getValue(items[i],"dtype")=="datetime"){
-                                		 value += store.getValue(items[i], "sname");
-                                         value += " ("
-                                         value += store.getValue(items[i], "dtype");
-                                         value += " mm/dd/yy),";
+                                		 temp += store.getValue(items[i], "sname");
+                                         temp += " ("
+                                         temp += store.getValue(items[i], "dtype");
+                                         temp += " mm/dd/yy)";
                                 	}
                                 	else{
-                                    value += store.getValue(items[i], "sname");
-                                    value += " ("
-                                    value += store.getValue(items[i], "dtype");
-                                    value += " ),";
+                                    temp += store.getValue(items[i], "sname");
+                                    temp += " ("
+                                    temp += store.getValue(items[i], "dtype");
+                                    temp += " )";
                                 	}
+                                	value.push(temp);
+                                	temp="";
                                 }
                                 	else{
                                 		store.deleteItem(items[i]);
@@ -478,9 +464,10 @@ define([
                                 },
                                 onComplete: completed
                             });
-                            var tab_text = "<tr>";
+                            //value.push(temp);
+                            /*var tab_text = "<tr>";
                             var textRange;
-                            var j = 0;
+                            var j = 0;/
                             value = value.replace(/,\s*$/, "");
                             var gridData = value.split(",");
                             for (j = 0; j < gridData.length; j++) {
@@ -493,14 +480,13 @@ define([
                             var a = D.createElement('a');
                             var rawFile;
                             var ctx = {
-                                worksheet: name || 'Worksheet',
                                 table: tab_text
-                            };
+                            };*/
                             var fileName = caseTypeValue;
                             fileName = fileName + ".xlsx";
 
-                            if ('download' in a) {
-                                var template = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><!--[if gte mso 9]><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>{worksheet}</x:Name><x:WorksheetOptions><x:DisplayGridlines/></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml><![endif]--></head><body><table cellspacing="0" rules="rows">{table}</table></body></html>';
+                            /*if ('download' in a) {
+                                var template = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>Template</x:Name><x:WorksheetOptions><x:Panes></x:Panes></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml></head><body><table cellspacing="0" rules="rows">{table}</table></body></html>';
                                 var format = function(s, c) {
                                     return s.replace(/{(\w+)}/g, function(m, p) {
                                         return c[p];
@@ -509,7 +495,25 @@ define([
                                 var blob = new Blob([format(template, ctx)], {
                                     type: 'application/vnd.ms-excel',
                                     endings: 'native'
-                                });
+                                });*/
+                            var wb = xlsx.utils.book_new();
+                            
+                            wb.SheetNames.push("Template","Read Me");
+                            var ws_data = [value];
+                            var ws = xlsx.utils.aoa_to_sheet(ws_data);
+                            wb.Sheets["Template"] = ws;
+
+                            var wbout = xlsx.write(wb, {bookType:'xlsx',  type: 'binary'});
+                            function s2ab(s) {
+                      
+                                    var buf = new ArrayBuffer(s.length);
+                                    var view = new Uint8Array(buf);
+                                    for (var i=0; i<s.length; i++) view[i] = s.charCodeAt(i) & 0xFF;
+                                    return buf;
+                                    
+                            }
+                                var blob = new Blob([s2ab(wbout)],{type:"application/octet-stream"});
+
                                 var fileObj = new File([blob], fileName);
                                 var repositoryObj = ecm.model.desktop.getRepositoryByName("tos");
                                 var folderPath = "/Bulk Case Creation";
@@ -518,7 +522,7 @@ define([
                                 } else {
                                     this.checkOutandCheckIn(repositoryObj,fileObj);
                                 }
-                            }
+                            //}
 
                         },
                         addDocument: function(path, rep, file) {
