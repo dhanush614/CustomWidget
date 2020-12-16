@@ -18,7 +18,7 @@ define([
     "dojo/aspect",
     "dojo/dom-attr", "dojo/request", "dojo/request/xhr", "dojo/dom", "dojo/on",
     "dojo/mouse",
-    
+
     "dojo/domReady!"
 ], function(declare, Action, domStyle, Button, lang,
     array, parser, cells, ToolbarSeparator,
@@ -30,8 +30,8 @@ define([
     domAttr, request, xhr, dom, on, mouse) {
 
     return declare("icmcustom.action.ICMGeneratePropertiesExcelAction", [Action], {
-       
-    	isEnabled: function() {
+
+        isEnabled: function() {
 
             var Solution = this.getActionContext("Solution");
             if (Solution === null || Solution.length == 0) {
@@ -54,18 +54,18 @@ define([
             var documentObj;
             var props = [];
             var taskLayout;
-            var reqProps={
-            		items: []
+            var reqProps = {
+                items: []
             };
-            var nonReqProps={
-            		items: []
+            var nonReqProps = {
+                items: []
             };
             var isDocumentAvailable = false;
             initiateTaskDialog = new BaseDialog({
                 cancelButtonLabel: "Cancel",
                 contentString: this.htmlTemplate,
 
-                createGrid: function() {                   
+                createGrid: function() {
                     var caseType = solution.getCaseTypes();
                     var caseTyepList = [];
                     var data = {
@@ -92,7 +92,7 @@ define([
                         store: typeStore,
                         autoComplete: true,
                         onChange: lang.hitch(this, function(value) {
-                        	caseTypeValue=value;
+                            caseTypeValue = value;
                             this.initializeSearch(value);
                         }),
                         style: {
@@ -109,11 +109,11 @@ define([
                 },
                 initializeSearch: function(value) {
 
-                	var ceQuery = "SELECT * FROM [Document] WHERE [DocumentTitle] =" + "'" + value + "'"+" and IsCurrentVersion=true";
+                    var ceQuery = "SELECT * FROM [Document] WHERE [DocumentTitle] =" + "'" + value + "'" + " and IsCurrentVersion=true";
                     this.executeCESearch("tos", ceQuery, false, value);
 
                 },
-                
+
                 executeCESearch: function(repositoryId, ceQuery, execute, fileNameValue) {
 
                     this._repositoryId = repositoryId;
@@ -135,7 +135,7 @@ define([
                         if (results.items.length > 0) {
                             documentObj = results.items;
                             isDocumentAvailable = true;
-                            
+
                             var itemUrl = documentObj[0].getContentUrl();
                             var request = new XMLHttpRequest();
                             request.open('GET', itemUrl, true);
@@ -143,15 +143,17 @@ define([
                             request.onload = function() {
                                 var reader = new FileReader();
                                 reader.readAsBinaryString(request.response);
-                                reader.onload =  function(e){
-                                	var workbook = xlsx.read(e.target.result,{type: 'binary'});
+                                reader.onload = function(e) {
+                                    var workbook = xlsx.read(e.target.result, {
+                                        type: 'binary'
+                                    });
                                     var Sheet = workbook.SheetNames[0];
                                     var excelRows = xlsx.utils.sheet_to_csv(workbook.Sheets[Sheet]);
                                     props = excelRows.split(",");
                                 };
                             };
                             request.send();
-                    }
+                        }
                     }), sortBy, sortAsc, null, function(error) {
 
                         console.log(error);
@@ -177,9 +179,9 @@ define([
 
                             var propData = {
                                 items: []
-                            };                            
+                            };
                             var caseTypes = solution.caseTypes;
-                            var prefix= solution.prefix;
+                            var prefix = solution.prefix;
                             for (var i = 0; i < caseTypes.length; i++) {
                                 if (caseTypes[i].id == caseTypeValue) {
                                     var propdata_list = caseTypes[i].solution.attributeDefinitions;
@@ -197,84 +199,82 @@ define([
                                     for (var i = 0; i < propData.items.length; i++) {
                                         propData.items[i].id = propData.items[i].name;
                                     }
-                                    
-                                    for(var y=0; y<propData.items.length; y++){
-                                    	if(propData.items[y].required==true){
-                                    		reqProps.items.push(propData.items[y]);
-                                    	}
-                                    	else{
-                                    		nonReqProps.items.push(propData.items[y]);
-                                    	}
+
+                                    for (var y = 0; y < propData.items.length; y++) {
+                                        if (propData.items[y].required == true) {
+                                            reqProps.items.push(propData.items[y]);
+                                        } else {
+                                            nonReqProps.items.push(propData.items[y]);
+                                        }
                                     }
-                                    for(var l=0;l<propData.items.length;l++){
-                                    	var present = props.findIndex(function(a){ return a.includes(propData.items[l].symbolicName)});
-                                    	if(present >= 0){
-                                    		props[present]=propData.items[l].symbolicName;
-                                    	}
+                                    for (var l = 0; l < propData.items.length; l++) {
+                                        var present = props.findIndex(function(a) {
+                                            return a.includes(propData.items[l].symbolicName)
+                                        });
+                                        if (present >= 0) {
+                                            props[present] = propData.items[l].symbolicName;
+                                        }
                                     }
                                     var data = {
-                                            identifier: "id",
-                                            items: []
-                                        };
-                                    var idVal=0;
+                                        identifier: "id",
+                                        items: []
+                                    };
+                                    var idVal = 0;
                                     var myNewItem;
-                                    if(props.length==0){
-                                    for(var x=0; x<reqProps.items.length; x++){
-                            			if(reqProps.items[x].dataType=="xs:timestamp"){
-                            			myNewItem = {
-                                				id: ++idVal,
-                                                pname: reqProps.items[x].id,
-                                                sname: reqProps.items[x].symbolicName,
-                                                isreq: reqProps.items[x].required,
-                                                dtype: reqProps.items[x].dataType.replace("xs:timestamp","datetime")
-                                            };
-                                        data.items.push(myNewItem);
-                            		}
-                            			else{
-                            				myNewItem = {
-                                    				id: ++idVal,
+                                    if (props.length == 0) {
+                                        for (var x = 0; x < reqProps.items.length; x++) {
+                                            if (reqProps.items[x].dataType == "xs:timestamp") {
+                                                myNewItem = {
+                                                    id: ++idVal,
                                                     pname: reqProps.items[x].id,
                                                     sname: reqProps.items[x].symbolicName,
                                                     isreq: reqProps.items[x].required,
-                                                    dtype: reqProps.items[x].dataType.replace("xs:","")
+                                                    dtype: reqProps.items[x].dataType.replace("xs:timestamp", "datetime")
                                                 };
-                                            data.items.push(myNewItem);
-                            			}
-                                    }
-                                    }
-                                    else{
-                                    	for(var x=0;x<reqProps.items.length;x++){
-                                    		if(!props.includes(reqProps.items[x].symbolicName)){
-                                    			props.push(reqProps.items[x]);
-                                    		}
-                                    	}
-                                    	for(var j=0; j<propData.items.length; j++){
-                                        	if(props.includes(propData.items[j].symbolicName)){
-                                        		if(propData.items[j].dataType == "xs:timestamp"){
-                                        			myNewItem = {
-                                            				id: ++idVal,
-                                                            pname: propData.items[j].id,
-                                                            sname: propData.items[j].symbolicName,
-                                                            isreq: propData.items[j].required,
-                                                            dtype: propData.items[j].dataType.replace("xs:timestamp","datetime")
-                                                        };
-                                        		}
-                                        		else{
-                                        			myNewItem = {
-                                            				id: ++idVal,
-                                                            pname: propData.items[j].id,
-                                                            sname: propData.items[j].symbolicName,
-                                                            isreq: propData.items[j].required,
-                                                            dtype: propData.items[j].dataType.replace("xs:","")
-                                                        };
-                                        		}
-                                        		
-                                        		
-                                                    data.items.push(myNewItem);
-                                        	}
+                                                data.items.push(myNewItem);
+                                            } else {
+                                                myNewItem = {
+                                                    id: ++idVal,
+                                                    pname: reqProps.items[x].id,
+                                                    sname: reqProps.items[x].symbolicName,
+                                                    isreq: reqProps.items[x].required,
+                                                    dtype: reqProps.items[x].dataType.replace("xs:", "")
+                                                };
+                                                data.items.push(myNewItem);
+                                            }
+                                        }
+                                    } else {
+                                        for (var x = 0; x < reqProps.items.length; x++) {
+                                            if (!props.includes(reqProps.items[x].symbolicName)) {
+                                                props.push(reqProps.items[x]);
+                                            }
+                                        }
+                                        for (var j = 0; j < propData.items.length; j++) {
+                                            if (props.includes(propData.items[j].symbolicName)) {
+                                                if (propData.items[j].dataType == "xs:timestamp") {
+                                                    myNewItem = {
+                                                        id: ++idVal,
+                                                        pname: propData.items[j].id,
+                                                        sname: propData.items[j].symbolicName,
+                                                        isreq: propData.items[j].required,
+                                                        dtype: propData.items[j].dataType.replace("xs:timestamp", "datetime")
+                                                    };
+                                                } else {
+                                                    myNewItem = {
+                                                        id: ++idVal,
+                                                        pname: propData.items[j].id,
+                                                        sname: propData.items[j].symbolicName,
+                                                        isreq: propData.items[j].required,
+                                                        dtype: propData.items[j].dataType.replace("xs:", "")
+                                                    };
+                                                }
+
+
+                                                data.items.push(myNewItem);
+                                            }
                                         }
                                     }
-                                    
+
 
                                     var stateStore = new Memory({
                                         data: nonReqProps
@@ -283,7 +283,7 @@ define([
 
                                 }
                             }
-                            
+
                             var node = dom.byId("addButton");
                             on(node, "click", function() {
                                 var myNewItem = {
@@ -298,14 +298,17 @@ define([
                             var remnode = dom.byId("remButton");
                             on(remnode, "click", function() {
                                 var items = grid.selection.getSelected();
-
                                 if (items.length) {
-                                    dojo.forEach(items, function(selectedItem) {
-                                        if (selectedItem != null) {
-                                            store.deleteItem(selectedItem);
-                                            store.save();
-                                        }
-                                    })
+                                    if (items[0].isreq[0]) {
+                                        alert("Required Property cannot be deleted");
+                                    } else {
+                                        dojo.forEach(items, function(selectedItem) {
+                                            if (selectedItem != null) {
+                                                store.deleteItem(selectedItem);
+                                                store.save();
+                                            }
+                                        })
+                                    }
                                 }
                             })
                             layoutProperties = [{
@@ -329,40 +332,37 @@ define([
                                             id: name,
                                             store: stateStore,
                                             onChange: function(value) {
-                                            	var store = grid.store;
+                                                var store = grid.store;
                                                 var index = grid.selection.selectedIndex;
                                                 var item = grid.getItem(index);
-                                            	if(value){                                                
-                                                for(var a=0;a<store._arrayOfAllItems.length;a++){
-                                                	if(value==store._arrayOfAllItems[a].pname){
-                                                		alert('Duplicate value is chosen, Please select any other value');
-                                                		store.setValue(item,'sname','');
-                                                		store.setValue(item,'isreq','');
-                                                		store.setValue(item,'dtype','');
-                                                		grid.update();
-                                                		break;
-                                                	}
-                                                	else{
-                                                		store.setValue(item, 'sname', this.item.symbolicName);
-                                                        store.setValue(item, 'isreq', this.item.required);
-                                                        if(this.item.dataType.includes("xs:timestamp")){
-                                                        	store.setValue(item, 'dtype', this.item.dataType.replace("xs:timestamp","datetime"));
+                                                if (value) {
+                                                    for (var a = 0; a < store._arrayOfAllItems.length; a++) {
+                                                        if (value == store._arrayOfAllItems[a].pname) {
+                                                            alert('Duplicate value is chosen, Please select any other value');
+                                                            store.setValue(item, 'sname', '');
+                                                            store.setValue(item, 'isreq', '');
+                                                            store.setValue(item, 'dtype', '');
+                                                            grid.update();
+                                                            break;
+                                                        } else {
+                                                            store.setValue(item, 'sname', this.item.symbolicName);
+                                                            store.setValue(item, 'isreq', this.item.required);
+                                                            if (this.item.dataType.includes("xs:timestamp")) {
+                                                                store.setValue(item, 'dtype', this.item.dataType.replace("xs:timestamp", "datetime"));
+                                                            } else {
+                                                                store.setValue(item, 'dtype', this.item.dataType.replace("xs:", ""));
+                                                            }
+                                                            grid.update();
                                                         }
-                                                        else{
-                                                        store.setValue(item, 'dtype', this.item.dataType.replace("xs:",""));
-                                                        }
-                                                        grid.update();
-                                                	}
+                                                    }
+
+                                                } else {
+                                                    alert('Empty value is chosen, Please select any value');
+                                                    store.setValue(item, 'sname', '');
+                                                    store.setValue(item, 'isreq', '');
+                                                    store.setValue(item, 'dtype', '');
+                                                    grid.update();
                                                 }
-                                                
-                                            	}
-                                            	else{
-                                            		alert('Empty value is chosen, Please select any value');
-                                            		store.setValue(item,'sname','');
-                                            		store.setValue(item,'isreq','');
-                                            		store.setValue(item,'dtype','');
-                                            		grid.update();
-                                            	}
                                             }
                                         },
                                         searchAttr: "id",
@@ -384,11 +384,11 @@ define([
                                         editable: false
                                     },
                                     {
-                                    	field: "dtype",
-                                    	name: "DataType",
-                                    	width: '109px',
-                                    	height: '109px',
-                                    	editable: false
+                                        field: "dtype",
+                                        name: "DataType",
+                                        width: '109px',
+                                        height: '109px',
+                                        editable: false
                                     },
                                 ]
                             }];
@@ -401,13 +401,12 @@ define([
                                 id: 'grid',
                                 store: store,
                                 structure: layoutProperties,
-                                canEdit: function () {
+                                canEdit: function() {
                                     var item = grid.getItem(grid.selection.selectedIndex);
                                     if (item.isreq[0] == false) {
                                         return true;
-                                    }
-                                    else{
-                                    	return false;
+                                    } else {
+                                        return false;
                                     }
                                 },
                                 rowSelector: '20px'
@@ -420,40 +419,37 @@ define([
                         onSave: function() {
                             var value = [];
                             var temp = "";
+
                             function completed(items, request) {
 
                                 for (var i = 0; i < items.length; i++) {
-                                	if(store.getValue(items[i],"pname")&&store.getValue(items[i],"sname")){
-                                	if(store.getValue(items[i], "isreq")==true && store.getValue(items[i],"dtype")=="datetime" ){
-                                		temp += store.getValue(items[i], "sname");
-                                        temp += " * (";
-                                        temp += store.getValue(items[i], "dtype");
-                                        temp += " mm/dd/yy)"
-                                	}
-                                	else if(store.getValue(items[i], "isreq")==true){
-                               		 temp += store.getValue(items[i], "sname");
-                                     temp += " * ("
-                                     temp += store.getValue(items[i], "dtype");
-                                     temp += " )";
-                            	}
-                                	else if(store.getValue(items[i],"dtype")=="datetime"){
-                                		 temp += store.getValue(items[i], "sname");
-                                         temp += " ("
-                                         temp += store.getValue(items[i], "dtype");
-                                         temp += " mm/dd/yy)";
-                                	}
-                                	else{
-                                    temp += store.getValue(items[i], "sname");
-                                    temp += " ("
-                                    temp += store.getValue(items[i], "dtype");
-                                    temp += " )";
-                                	}
-                                	value.push(temp);
-                                	temp="";
-                                }
-                                	else{
-                                		store.deleteItem(items[i]);
-                                	}
+                                    if (store.getValue(items[i], "pname") && store.getValue(items[i], "sname")) {
+                                        if (store.getValue(items[i], "isreq") == true && store.getValue(items[i], "dtype") == "datetime") {
+                                            temp += store.getValue(items[i], "sname");
+                                            temp += " * (";
+                                            temp += store.getValue(items[i], "dtype");
+                                            temp += " mm/dd/yy)"
+                                        } else if (store.getValue(items[i], "isreq") == true) {
+                                            temp += store.getValue(items[i], "sname");
+                                            temp += " * ("
+                                            temp += store.getValue(items[i], "dtype");
+                                            temp += " )";
+                                        } else if (store.getValue(items[i], "dtype") == "datetime") {
+                                            temp += store.getValue(items[i], "sname");
+                                            temp += " ("
+                                            temp += store.getValue(items[i], "dtype");
+                                            temp += " mm/dd/yy)";
+                                        } else {
+                                            temp += store.getValue(items[i], "sname");
+                                            temp += " ("
+                                            temp += store.getValue(items[i], "dtype");
+                                            temp += " )";
+                                        }
+                                        value.push(temp);
+                                        temp = "";
+                                    } else {
+                                        store.deleteItem(items[i]);
+                                    }
                                 }
                             }
                             store.fetch({
@@ -497,31 +493,37 @@ define([
                                     endings: 'native'
                                 });*/
                             var wb = xlsx.utils.book_new();
-                            
-                            wb.SheetNames.push("Template","Read Me");
+
+                            wb.SheetNames.push("Template", "Read Me");
                             var ws_data = [value];
                             var ws = xlsx.utils.aoa_to_sheet(ws_data);
                             wb.Sheets["Template"] = ws;
 
-                            var wbout = xlsx.write(wb, {bookType:'xlsx',  type: 'binary'});
-                            function s2ab(s) {
-                      
-                                    var buf = new ArrayBuffer(s.length);
-                                    var view = new Uint8Array(buf);
-                                    for (var i=0; i<s.length; i++) view[i] = s.charCodeAt(i) & 0xFF;
-                                    return buf;
-                                    
-                            }
-                                var blob = new Blob([s2ab(wbout)],{type:"application/octet-stream"});
+                            var wbout = xlsx.write(wb, {
+                                bookType: 'xlsx',
+                                type: 'binary'
+                            });
 
-                                var fileObj = new File([blob], fileName);
-                                var repositoryObj = ecm.model.desktop.getRepositoryByName("tos");
-                                var folderPath = "/Bulk Case Creation";
-                                if (!isDocumentAvailable) {
-                                    this.addDocument(folderPath, repositoryObj, fileObj);
-                                } else {
-                                    this.checkOutandCheckIn(repositoryObj,fileObj);
-                                }
+                            function s2ab(s) {
+
+                                var buf = new ArrayBuffer(s.length);
+                                var view = new Uint8Array(buf);
+                                for (var i = 0; i < s.length; i++) view[i] = s.charCodeAt(i) & 0xFF;
+                                return buf;
+
+                            }
+                            var blob = new Blob([s2ab(wbout)], {
+                                type: "application/octet-stream"
+                            });
+
+                            var fileObj = new File([blob], fileName);
+                            var repositoryObj = ecm.model.desktop.getRepositoryByName("tos");
+                            var folderPath = "/Bulk Case Creation";
+                            if (!isDocumentAvailable) {
+                                this.addDocument(folderPath, repositoryObj, fileObj);
+                            } else {
+                                this.checkOutandCheckIn(repositoryObj, fileObj);
+                            }
                             //}
 
                         },
@@ -582,7 +584,7 @@ define([
                                 var templateMetadataValues = [];
                                 var fullPath = null;
                                 rep.addDocumentItem(parentFolder, objectStore, templateName, criterias, contentSourceType, mimeType, filename, content, childComponentValues, permissions, securityPolicyId, addAsMinorVersion, autoClassify, allowDuplicateFileNames, setSecurityParent, teamspaceId, lang.hitch(this, function() {
-                                	console.log("Success");
+                                    console.log("Success");
                                     var messageDialog = new ecm.widget.dialog.MessageDialog({
                                         text: "Template created successfully"
                                     });
@@ -596,36 +598,36 @@ define([
                             }));
                         },
 
-                        checkOutandCheckIn: function(repositoryObject,file) {
-                        	var returnVersion="released";
-                        	repositoryObject.lockItems(documentObj,lang.hitch(this,function(updatedItems) {
-                        		var contentItem=ecm.model.ContentItem(updatedItems[0]);
-                        		var templateName="Document";
-                        		 var criterias = [{
-                                     "name": "DocumentTitle",
-                                     "value": caseTypeValue,
-                                     "dataType": "xs:string",
-                                     "label": "Document Title",
-                                     "displayValue": caseTypeValue
-                                 }];
-                        		var contentSourceType="Document";
-                        		var mimeType=file.type;
-                        		var filename=file.name;
-                        		var content=file;
-                        		var childComponentValues=[];
-                        		var permissions=null;
-                        		var securityPolicyId=null;
-                        		var newVersion=null;
-                        		var checkInAsMinorVersion=false;
-                        		var autoClassify=false; 
-                        		var isBackgroundRequest=true;
-                        		var uploadProgress=true;
-                        		var parameters;
-                        		var templateMetadata=[];
-                        		contentItem.repository=repositoryObject; 
-                        		contentItem.checkIn(templateName, criterias, contentSourceType, mimeType, filename, content, childComponentValues, permissions, securityPolicyId, newVersion, checkInAsMinorVersion, autoClassify, lang.hitch(this,function(checkedInDoc){
-                        			console.log("checked in success");
-                        			var messageDialog = new ecm.widget.dialog.MessageDialog({
+                        checkOutandCheckIn: function(repositoryObject, file) {
+                            var returnVersion = "released";
+                            repositoryObject.lockItems(documentObj, lang.hitch(this, function(updatedItems) {
+                                var contentItem = ecm.model.ContentItem(updatedItems[0]);
+                                var templateName = "Document";
+                                var criterias = [{
+                                    "name": "DocumentTitle",
+                                    "value": caseTypeValue,
+                                    "dataType": "xs:string",
+                                    "label": "Document Title",
+                                    "displayValue": caseTypeValue
+                                }];
+                                var contentSourceType = "Document";
+                                var mimeType = file.type;
+                                var filename = file.name;
+                                var content = file;
+                                var childComponentValues = [];
+                                var permissions = null;
+                                var securityPolicyId = null;
+                                var newVersion = null;
+                                var checkInAsMinorVersion = false;
+                                var autoClassify = false;
+                                var isBackgroundRequest = true;
+                                var uploadProgress = true;
+                                var parameters;
+                                var templateMetadata = [];
+                                contentItem.repository = repositoryObject;
+                                contentItem.checkIn(templateName, criterias, contentSourceType, mimeType, filename, content, childComponentValues, permissions, securityPolicyId, newVersion, checkInAsMinorVersion, autoClassify, lang.hitch(this, function(checkedInDoc) {
+                                    console.log("checked in success");
+                                    var messageDialog = new ecm.widget.dialog.MessageDialog({
                                         text: "Template updated successfully"
                                     });
                                     messageDialog.show();
@@ -633,38 +635,44 @@ define([
                                     dijit.byId('addButton').destroy();
                                     dijit.byId('remButton').destroy();
                                     dijit.byId('gridDiv').destroy();
-                        		}), isBackgroundRequest, uploadProgress, null, parameters, templateMetadata);
-            				}));
+                                }), isBackgroundRequest, uploadProgress, null, parameters, templateMetadata);
+                            }));
                         },
 
                     });
                     initiateTaskDialog1.setTitle(caseTypeValue);
                     initiateTaskDialog1.createGrid();
-                   // initiateTaskDialog1.setSize(600, 500);
+                    // initiateTaskDialog1.setSize(600, 500);
                     initiateTaskDialog1.addButton("Save Template", initiateTaskDialog1.onSave, false, false);
                     //initiateTaskDialog1.setResizable(true);
-                    
-                    
+
+
                     initiateTaskDialog1.setResizable(false);
                     initiateTaskDialog1.setSizeToViewportRatio(false);
                     initiateTaskDialog1._setSizeToViewportRatio = false;
-                    initiateTaskDialog1._lockFullscreen=true;
+                    initiateTaskDialog1._lockFullscreen = true;
                     initiateTaskDialog1.setMaximized(false);
                     initiateTaskDialog1.setSize(700, 500);
                     initiateTaskDialog1.fitContentArea = true;
                     initiateTaskDialog1.show();
-                    
-                    require(["dojo/aspect","dojo/_base/lang"],function(aspect,lang) {
 
-                    	aspect.after(initiateTaskDialog1, "resize", lang.hitch(this,function(){
-                    		if(grid){
-                    			grid.resize({w:800,h:450},{w:800,h:450});                    			
+                    require(["dojo/aspect", "dojo/_base/lang"], function(aspect, lang) {
+
+                        aspect.after(initiateTaskDialog1, "resize", lang.hitch(this, function() {
+                            if (grid) {
+                                grid.resize({
+                                    w: 800,
+                                    h: 450
+                                }, {
+                                    w: 800,
+                                    h: 450
+                                });
                             }
-                    	}),true);
+                        }), true);
                     });
                     //initiateTaskDialog1.resize();
 
-                },             
+                },
 
                 buildHtmlTemplate1: function() {
                     var htmlstring1 = '<div style="width: 600px; height: 300px;"><div data-dojo-type="dijit/layout/TabContainer" style="width: 100%; height: 100%;">' +
