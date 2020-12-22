@@ -109,7 +109,7 @@ define([
                 },
                 initializeSearch: function(value) {
 
-                    var ceQuery = "SELECT * FROM [Document] WHERE [DocumentTitle] =" + "'" + value + "'" + " and IsCurrentVersion=true";
+                    var ceQuery = "SELECT * FROM [BulkCaseCreationTemplate] WHERE [DocumentTitle] =" + "'" + value + "'" + " and IsCurrentVersion=true";
                     this.executeCESearch("tos", ceQuery, false, value);
 
                 },
@@ -518,7 +518,7 @@ define([
 
                             var fileObj = new File([blob], fileName);
                             var repositoryObj = ecm.model.desktop.getRepositoryByName("tos");
-                            var folderPath = "/Bulk Case Creation";
+                            var folderPath = "/Bulk Case Creation Template";
                             if (!isDocumentAvailable) {
                                 this.addDocument(folderPath, repositoryObj, fileObj);
                             } else {
@@ -531,7 +531,7 @@ define([
                             rep.retrieveItem(path, lang.hitch(this, function(Folder) {
                                 var parentFolder = Folder;
                                 var objectStore = ecm.model.desktop.currentSolution.caseTypes[0].objectStore;
-                                var templateName = "Document";
+                                var templateName = "BulkCaseCreationTemplate";
                                 var criterias = [{
                                     "name": "DocumentTitle",
                                     "value": caseTypeValue,
@@ -602,7 +602,7 @@ define([
                             var returnVersion = "released";
                             repositoryObject.lockItems(documentObj, lang.hitch(this, function(updatedItems) {
                                 var contentItem = ecm.model.ContentItem(updatedItems[0]);
-                                var templateName = "Document";
+                                var templateName = "BulkCaseCreationTemplate";
                                 var criterias = [{
                                     "name": "DocumentTitle",
                                     "value": caseTypeValue,

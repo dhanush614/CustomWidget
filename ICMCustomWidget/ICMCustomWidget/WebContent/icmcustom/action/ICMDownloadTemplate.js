@@ -12,12 +12,11 @@ define([
     "dojox/form/Uploader",
     "dojox/form/uploader/FileList",
     "dojo/aspect",
-    "icmcustom/js/xlsx",
-    "icmcustom/js/jszip",
+    "icmcustom/js/FileSaver",
     "dojo/dom-attr",
     "dojo/request/xhr",
     "dojo/domReady!"
-], function(declare, Action, domStyle, Button, declare, lang, Coordination, BaseDialog, FilteringSelect, ItemFileWriteStore, Uploader, FileList, aspect, xlsx, jszip, domAttr, xhr) {
+], function(declare, Action, domStyle, Button, declare, lang, Coordination, BaseDialog, FilteringSelect, ItemFileWriteStore, Uploader, FileList, aspect, FileSaver, domAttr, xhr) {
 
     return declare("icmcustom.action.ICMDownloadTemplate", [Action], {
         solution: null,
@@ -107,70 +106,16 @@ define([
                         var item = results.items[0];
                         var itemUrl = item.getContentUrl();
 
-                        xhrArgs = {
-                            url: itemUrl,
-                            handleAs: "text",
-                            sync: true,
-                            headers: {
-                                "Content-Type": "application/json"
-                            },
-                            error: function(error) {
-
-                                alert("Error occured during getting users from role. Please contact administrator");
-                                console.log("Error occured during getting users from role. Please contact administrator" + error);
-                            }
+                        var request = new XMLHttpRequest();
+                        request.open('GET', itemUrl, true);
+                        request.responseType = 'blob';
+                        request.onload = function(e) {
+                            	var blob = e.target.response;
+                            	var fileName = fileNameValue+"_"+new Date().toLocaleString()+".xlsx";
+                                saveAs(blob, fileName);
                         };
-
-                        var deferred = dojo.xhrGet(xhrArgs);
-                        var content = deferred.results;
-                        var htmlFileTemplate = content[0];
-                        var D = document;
-                        var a = D.createElement('a');
-                        var rawFile;
-                        var fileName = fileNameValue;
-                        fileName = fileName + ".xlsx";
-                        if (navigator.msSaveBlob) {
-                            var template = htmlFileTemplate;
-                            var blob = new Blob([template], {
-                                type: 'application/vnd.ms-excel',
-                                endings: 'native'
-                            });
-                            return navigator.msSaveBlob(blob, fileName);
-                        }
-                        if ('download' in a) {
-                            var template = htmlFileTemplate;
-                            var blob = new Blob([template], {
-                                type: 'application/vnd.ms-excel',
-                                endings: 'native'
-                            });
-                            rawFile = URL.createObjectURL(blob);
-                            a.setAttribute('download', fileName);
-                        } else {
-                            var uri = 'data:application/vnd.ms-excel;base64,';
-                            var base64 = function(s) {
-                                return window.btoa(unescape(encodeURIComponent(s)))
-                            };
-                            window.location.href = uri + base64(template)
-                            a.setAttribute('target', '_blank');
-                            a.setAttribute('download', fileName);
-                        }
-                        a.href = rawFile;
-                        a.setAttribute('style', 'display:none;');
-                        D.body.appendChild(a);
-                        initiateTaskDialog.destroy();
-                        setTimeout(function() {
-                            if (a.click) {
-                                a.click();
-                            } else if (document.createEvent) {
-                                var eventObj = document.createEvent('MouseEvents');
-                                eventObj.initEvent('click', true, true);
-                                a.dispatchEvent(eventObj);
-                            }
-                            D.body.removeChild(a);
-                        }, 100);
-
+                        request.send();
                     }), sortBy, sortAsc, null, function(error) {
-
                         console.log(error);
                     });
                     
@@ -178,7 +123,7 @@ define([
                 },
                 createQuery: function() {
 
-                	var ceQuery = "SELECT * FROM [Document] WHERE [DocumentTitle] =" + "'" + caseTypeVal + "'"+" and IsCurrentVersion=true";
+                	var ceQuery = "SELECT * FROM [BulkCaseCreationTemplate] WHERE [DocumentTitle] =" + "'" + caseTypeVal + "'"+" and IsCurrentVersion=true";
                     this.executeCESearch("tos", ceQuery, false, caseTypeVal);
 
                 },
