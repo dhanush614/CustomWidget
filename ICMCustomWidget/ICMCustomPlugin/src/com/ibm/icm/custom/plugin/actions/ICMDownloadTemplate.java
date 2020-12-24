@@ -55,21 +55,36 @@ public class ICMDownloadTemplate extends PluginAction {
 
 	@Override
 	public JSONObject getAdditionalConfiguration(Locale locale) {
-		String jsonString = 
-			"{" +
-			"\"ICM_ACTION_COMPATIBLE\": true," +
-			"\"context\": null," +
-			"\"name\": \"ICM Download Template\"," +
-			"\"description\": \"An action to download documents\"," +
-			"\"properties\": [" +
-				"{" +
-					"\"id\": \"label\"," +
-					"\"title\": \"label\"," +
-					"\"defaultValue\": \"Download Template\"," +
-					"\"type\": \"string\"," +
-					"\"isLocalized\": false" +
-				"}," +				
-			"]}";
+		String jsonString = "{\r\n" +
+				"	        \"ICM_ACTION_COMPATIBLE\": true,\r\n" +
+				"	        \"context\": null,\r\n" +
+				"            \"name\": \"ICM Download Template\",\r\n" +
+				"	    \"description\": \"An action to download documents\",\r\n" +
+				"            \"properties\": [\r\n" +
+				"                {\r\n" +
+				"                    \"id\": \"label\",\r\n" +
+				"                    \"title\": \"label\",\r\n" +
+				"                    \"defaultValue\": \"Download Template\",\r\n" +
+				"                    \"type\": \"string\",\r\n" +
+				"                    \"isLocalized\":false\r\n" +
+				"                },\r\n" +
+				"                {\r\n" +
+				"                    \"id\": \"targetOS\",\r\n" +
+				"                    \"title\": \"Enter Target OS\",\r\n" +
+				"                    \"defaultValue\": \"\",\r\n" +
+				"                    \"type\": \"string\",\r\n" +
+				"                    \"isLocalized\":false\r\n" +
+				"                },\r\n" +
+				"                {\r\n" +
+				"                    \"id\": \"docClass\",\r\n" +
+				"                    \"title\": \"Enter Document Class\",\r\n" +
+				"                    \"defaultValue\": \"\",\r\n" +
+				"                    \"type\": \"string\",\r\n" +
+				"                    \"isLocalized\":false\r\n" +
+				"                },\r\n" +
+				"            ],\r\n" +
+				"            \"events\":[]" +
+				"	}";
 		try {
 			return JSONObject.parse(jsonString);
 		} catch (IOException e) {

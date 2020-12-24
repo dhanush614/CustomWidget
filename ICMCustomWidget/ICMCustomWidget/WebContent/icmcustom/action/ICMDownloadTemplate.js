@@ -36,6 +36,8 @@ define([
             this.htmlTemplate = this.buildHtmlTemplate();
             var initiateTaskDialog;
             var caseTypeVal;
+            var documentClass = this.propertiesValue.docClass;
+            var targetOS = this.propertiesValue.targetOS;
             initiateTaskDialog = new BaseDialog({
                 cancelButtonLabel: "Cancel",
                 contentString: this.htmlTemplate,
@@ -111,7 +113,14 @@ define([
                         request.responseType = 'blob';
                         request.onload = function(e) {
                             	var blob = e.target.response;
-                            	var fileName = fileNameValue+"_"+new Date().toLocaleString()+".xlsx";
+                            	var today = new Date();
+                                var y = today.getFullYear();
+                                var m = today.getMonth() + 1;
+                                var d = today.getDate();
+                                var h = today.getHours();
+                                var mi = today.getMinutes();
+                                var s = today.getSeconds();
+                            	var fileName = fileNameValue+"_"+ d + "/" + m + "/" + y + "," + h + ":" + mi + ":" + s +".xlsx";
                                 saveAs(blob, fileName);
                         };
                         request.send();
@@ -123,8 +132,8 @@ define([
                 },
                 createQuery: function() {
 
-                	var ceQuery = "SELECT * FROM [BulkCaseCreationTemplate] WHERE [DocumentTitle] =" + "'" + caseTypeVal + "'"+" and IsCurrentVersion=true";
-                    this.executeCESearch("tos", ceQuery, false, caseTypeVal);
+                	var ceQuery = "SELECT * FROM ["+documentClass+"] WHERE [DocumentTitle] =" + "'" + caseTypeVal + "'"+" and IsCurrentVersion=true";
+                    this.executeCESearch(targetOS, ceQuery, false, caseTypeVal);
 
                 },
                

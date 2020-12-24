@@ -57,6 +57,9 @@ define([
             var reqProps = {
                 items: []
             };
+            var folderPath = this.propertiesValue.folderPath;
+            var documentClass = this.propertiesValue.docClass;
+            var targetOS = this.propertiesValue.targetOS;
             var nonReqProps = {
                 items: []
             };
@@ -109,8 +112,8 @@ define([
                 },
                 initializeSearch: function(value) {
 
-                    var ceQuery = "SELECT * FROM [BulkCaseCreationTemplate] WHERE [DocumentTitle] =" + "'" + value + "'" + " and IsCurrentVersion=true";
-                    this.executeCESearch("tos", ceQuery, false, value);
+                    var ceQuery = "SELECT * FROM ["+documentClass+"] WHERE [DocumentTitle] =" + "'" + value + "'" + " and IsCurrentVersion=true";
+                    this.executeCESearch(targetOS, ceQuery, false, value);
 
                 },
 
@@ -517,8 +520,8 @@ define([
                             });
 
                             var fileObj = new File([blob], fileName);
-                            var repositoryObj = ecm.model.desktop.getRepositoryByName("tos");
-                            var folderPath = "/Bulk Case Creation Template";
+                            var repositoryObj = ecm.model.desktop.getRepositoryByName(targetOS);
+
                             if (!isDocumentAvailable) {
                                 this.addDocument(folderPath, repositoryObj, fileObj);
                             } else {
@@ -531,7 +534,7 @@ define([
                             rep.retrieveItem(path, lang.hitch(this, function(Folder) {
                                 var parentFolder = Folder;
                                 var objectStore = ecm.model.desktop.currentSolution.caseTypes[0].objectStore;
-                                var templateName = "BulkCaseCreationTemplate";
+                                var templateName = documentClass;
                                 var criterias = [{
                                     "name": "DocumentTitle",
                                     "value": caseTypeValue,
@@ -602,7 +605,7 @@ define([
                             var returnVersion = "released";
                             repositoryObject.lockItems(documentObj, lang.hitch(this, function(updatedItems) {
                                 var contentItem = ecm.model.ContentItem(updatedItems[0]);
-                                var templateName = "BulkCaseCreationTemplate";
+                                var templateName = documentClass;
                                 var criterias = [{
                                     "name": "DocumentTitle",
                                     "value": caseTypeValue,

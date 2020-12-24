@@ -33,10 +33,8 @@ define([
                 return true;
             }
         },
-        execute: function() {
-            this.caseType = this.propertiesValue.caseType;
-            this.caseProperties = this.propertiesValue.caseProperties;
-            console.log(this.caseType + " " + this.caseProperties);
+        execute: function() {          
+            var caseTypeValue ="";
             const xlsx = require('xlsx');
             this.htmlTemplate = this.buildHtmlTemplate();
             var workbook = xlsx.XLSX;
@@ -44,6 +42,9 @@ define([
             var createdCaseCount = 0;
             var totalRowsLength = 0;
             var caseTypeDropDown1;
+            var folderPath = this.propertiesValue.folderPath;
+            var documentClass = this.propertiesValue.docClass;
+            var targetOS = this.propertiesValue.targetOS;
             this.initiateTaskDialog = new BaseDialog({
                 cancelButtonLabel: "Cancel",
                 contentString: this.htmlTemplate,
@@ -51,84 +52,6 @@ define([
                     console.log("inside Cancel");
                     var uploadButtonId = dijit.byId("fileUpload");
                     uploadButtonId.destroy();
-                },
-
-                GetTableFromExcel: function(data) {
-                    var workbook = xlsx.read(data, {
-                        type: 'binary'
-                    });
-                    var Sheet = workbook.SheetNames[0];
-                    var excelRows = xlsx.utils.sheet_to_row_object_array(workbook.Sheets[Sheet]);
-                    this.createCaseMethod(excelRows);
-
-                },
-                createCaseMethod: function(excelRows) {
-
-                    var solutionObj = ecm.model.desktop.currentSolution;
-                    var excelKeyObj = [];
-                    var excelValObj = [];
-                    totalRowsLength = excelRows.length;
-                    if (totalRowsLength > 0) {
-                        for (var er = 0; er < excelRows.length; er++) {
-                            excelKeyObj = Object.keys(excelRows[er]);
-                            excelValObj = Object.values(excelRows[er]);
-                            var caseTypeValue = this.caseTypeDropDown.value;
-                            if (caseTypeValue != null && caseTypeValue != "") {
-
-                                this.assignMetadataForCaseCreation(solutionObj, caseTypeValue, excelKeyObj, excelValObj);
-
-                            } else {
-                                var messageDialog = new ecm.widget.dialog.MessageDialog({
-                                    text: "Case Type is Empty"
-                                });
-                                messageDialog.show();
-                                var uploadButtonId = dijit.byId("fileUpload");
-                                uploadButtonId.destroy();
-                            }
-                        }
-                    } else {
-                        var messageDialog = new ecm.widget.dialog.MessageDialog({
-                            text: "Please upload the filled case creation template"
-                        });
-                        messageDialog.show();
-                        var uploadButtonId = dijit.byId("fileUpload");
-                        uploadButtonId.destroy();
-                    }
-
-                },
-                assignMetadataForCaseCreation: function(solutionObj, caseTypeVal, excelKeyObj, excelValObj) {
-                    solutionObj.createNewCaseEditable(caseTypeVal, function(newCaseEditable) {
-
-                        for (var k = 0; k < excelKeyObj.length; k++) {
-                            var d = excelKeyObj[k];
-                            var symbolicName = excelKeyObj[k];
-                            if (symbolicName.includes('*')) {
-                                symbolicName = symbolicName.replace(/\* *\([^)]*\) */g, "").trim();
-                            } else {
-                                symbolicName = symbolicName.replace(/ *\([^)]*\) */g, "").trim();
-                            }
-                            var propVal = excelValObj[k];
-                            if (d.includes('datetime')) {
-                                propVal = new Date(propVal);
-                            }
-                            var casePropsHandler = newCaseEditable.propertiesCollection[symbolicName];
-                            if (casePropsHandler != undefined) {
-                                casePropsHandler.setValue(propVal);
-                            }
-                        }
-
-                        newCaseEditable.save(lang.hitch(this, function(savedCaseEditable) {
-                            ++createdCaseCount;
-                            if (createdCaseCount == totalRowsLength) {
-                                var messageDialog = new ecm.widget.dialog.MessageDialog({
-                                    text: "Bulk Case Creation has been completed successfully"
-                                });
-                                messageDialog.show();
-                                var uploadButtonId = dijit.byId("fileUpload");
-                                uploadButtonId.destroy();
-                            }
-                        }));
-                    });
                 },
                 createGrid: function() {
 
@@ -164,7 +87,8 @@ define([
                         placeHolder: 'Select Case Type',
                         onChange: function(value){
                         	if(value){
-                        		caseTypeDropDown1.set('disabled',false);                        		
+                        		caseTypeDropDown1.set('disabled',false);   
+                        		caseTypeValue=value;
                         	}
                         	else{                        		
                         		caseTypeDropDown1.reset();
@@ -199,24 +123,9 @@ define([
                         var regex = /^([a-zA-Z0-9\s_\\.\-:])+(.xls|.xlsx)$/;
                         if (regex.test(fileUpload.getValue()[0].name.toLowerCase())) {
                             if (typeof(FileReader) != "undefined") {
-                                var reader = new FileReader();
-
-                                if (reader.readAsBinaryString) {
-                                    reader.onload = lang.hitch(this, function(e) {
-                                        this.GetTableFromExcel(e.target.result);
-                                    });
-                                    reader.readAsBinaryString(fileUpload._files[0]);
-                                } else {
-                                    reader.onload = lang.hitch(this, function(e) {
-                                        var data = "";
-                                        var bytes = new Uint8Array(e.target.result);
-                                        for (var i = 0; i < bytes.byteLength; i++) {
-                                            data += String.fromCharCode(bytes[i]);
-                                        }
-                                        this.GetTableFromExcel(data);
-                                    });
-                                    reader.readAsArrayBuffer(fileUpload._files[0]);
-                                }
+                            	var repositoryObj = ecm.model.desktop.getRepositoryByName(targetOS);
+                            	var fileObj=fileUpload._files[0];
+                                this.addDocument(folderPath,repositoryObj,fileObj);
                             } else {
                                 alert("This browser does not support HTML5.");
                                 var uploadButtonId = dijit.byId("fileUpload");
@@ -235,13 +144,81 @@ define([
 
                     }
 
+                },
+                addDocument: function(path, rep, file) {
+                    rep.retrieveItem(path, lang.hitch(this, function(Folder) {
+                        var parentFolder = Folder;
+                        var objectStore = ecm.model.desktop.currentSolution.caseTypes[0].objectStore;
+                        var templateName = documentClass;
+                        var criterias = [{
+                            "name": "DocumentTitle",
+                            "value": caseTypeValue,
+                            "dataType": "xs:string",
+                            "label": "Document Title",
+                            "displayValue": caseTypeValue
+                        }];
+                        var contentSourceType = "Document";
+                        var mimeType = file.type;
+                        var filename = file.name;
+                        var content = file;
+                        var childComponentValues = [];
+                        var permissions = [{
+                                "granteeName": "PEWorkflowSystemAdmin",
+                                "accessType": 1,
+                                "accessMask": 998903,
+                                "granteeType": 2001,
+                                "inheritableDepth": 0,
+                                "roleName": null
+                            },
+                            {
+                                "granteeName": ecm.model.desktop.userId,
+                                "accessType": 1,
+                                "accessMask": 998903,
+                                "granteeType": 2000,
+                                "inheritableDepth": 0,
+                                "roleName": null
+                            },
+                            {
+                                "granteeName": "#AUTHENTICATED-USERS",
+                                "accessType": 1,
+                                "accessMask": 131201,
+                                "granteeType": 2001,
+                                "inheritableDepth": 0,
+                                "roleName": null
+                            }
+                        ];
+                        var securityPolicyId = null;
+                        var addAsMinorVersion = false;
+                        var autoClassify = false;
+                        var allowDuplicateFileNames = true;
+                        var setSecurityParent = null;
+                        var teamspaceId;
+                        var isBackgroundRequest = true;
+                        var compoundDocument = false;
+                        var uploadProgress = true;
+                        var applicationGroup = "";
+                        var application = "";
+                        var parameters;
+                        var templateMetadataValues = [];
+                        var fullPath = null;
+                        rep.addDocumentItem(parentFolder, objectStore, templateName, criterias, contentSourceType, mimeType, filename, content, childComponentValues, permissions, securityPolicyId, addAsMinorVersion, autoClassify, allowDuplicateFileNames, setSecurityParent, teamspaceId, lang.hitch(this, function() {
+                            console.log("Success");
+                            var messageDialog = new ecm.widget.dialog.MessageDialog({
+                                text: "File Uploaded successfully"
+                            });
+                            messageDialog.show();
+                            var uploadButtonId = dijit.byId("fileUpload");
+                            uploadButtonId.destroy();
+
+                        }, isBackgroundRequest, null, compoundDocument, uploadProgress, applicationGroup, application, parameters, templateMetadataValues, fullPath));
+                    }));
                 }
 
             });
-            this.initiateTaskDialog.setTitle("Bulk Upload");
+            this.initiateTaskDialog.setTitle("Upload Case Creation Template");
             this.initiateTaskDialog.createGrid();
             this.initiateTaskDialog.setSize(450, 400);
-            this.initiateTaskDialog.addButton("Create Bulk Case", this.initiateTaskDialog.onExecute, false, false);
+            this.initiateTaskDialog.addButton("Upload", this.initiateTaskDialog.onExecute, false, false);
             this.initiateTaskDialog.setResizable(true);
             this.initiateTaskDialog.show();
 

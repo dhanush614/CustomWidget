@@ -55,42 +55,43 @@ public class ICMBulkUploadAction extends PluginAction {
 
 	@Override
 	public JSONObject getAdditionalConfiguration(Locale locale) {
-		String jsonString = 
-			"{" +
-			"\"ICM_ACTION_COMPATIBLE\": true," +
-			"\"context\": null," +
-			"\"name\": \"ICM Bulk Upload Action\"," +
-			"\"description\": \"An action to do bulk upload documents\"," +
-			"\"properties\": [" +
-				"{" +
-					"\"id\": \"label\"," +
-					"\"title\": \"label\"," +
-					"\"defaultValue\": \"Bulk Upload Action\"," +
-					"\"type\": \"string\"," +
-					"\"isLocalized\": false" +
-				"}," +
-				"{" +
-				"\"id\": \"caseType\"," +
-				"\"title\": \"Provide CaseType to create Case \"," +
-				"\"defaultValue\": \"\"," +
-				"\"type\": \"caseType\"," +
-				"\"isLocalized\": false" +
-			"}," +					
-				"{" +
-					"\"id\": \"caseProperties\"," +
-					"\"title\": \"Provide Case Properties for Case Creation \"," +
-					"\"defaultValue\": \"\"," +
-					"\"type\": \"string\"," +
-					"\"isLocalized\": false" +
-				"}," +
-				"{" +
-				"\"id\": \"message\"," +
-				"\"title\": \"message\"," +
-				"\"defaultValue\": \"\"," +
-				"\"type\": \"string\"," +
-				"\"isLocalized\": false" +
-			"}" +					
-			"]}";
+		String jsonString = "{\r\n" +
+				"	        \"ICM_ACTION_COMPATIBLE\": true,\r\n" +
+				"	        \"context\": null,\r\n" +
+				"            \"name\": \"ICM Bulk Upload Action\",\r\n" +
+				"	    \"description\": \"An action to do bulk upload documents\",\r\n" +
+				"            \"properties\": [\r\n" +
+				"                {\r\n" +
+				"                    \"id\": \"label\",\r\n" +
+				"                    \"title\": \"label\",\r\n" +
+				"                    \"defaultValue\": \"Bulk Upload Action\",\r\n" +
+				"                    \"type\": \"string\",\r\n" +
+				"                    \"isLocalized\":false\r\n" +
+				"                },\r\n" +
+				"                {\r\n" +
+				"                    \"id\": \"targetOS\",\r\n" +
+				"                    \"title\": \"Enter Target OS\",\r\n" +
+				"                    \"defaultValue\": \"\",\r\n" +
+				"                    \"type\": \"string\",\r\n" +
+				"                    \"isLocalized\":false\r\n" +
+				"                },\r\n" +
+				"                {\r\n" +
+				"                    \"id\": \"docClass\",\r\n" +
+				"                    \"title\": \"Enter Document Class\",\r\n" +
+				"                    \"defaultValue\": \"\",\r\n" +
+				"                    \"type\": \"string\",\r\n" +
+				"                    \"isLocalized\":false\r\n" +
+				"                },\r\n" +
+				"                {\r\n" +
+				"                    \"id\": \"folderPath\",\r\n" +
+				"                    \"title\": \"Enter Folder Path\",\r\n" +
+				"                    \"defaultValue\": \"\",\r\n" +
+				"                    \"type\": \"string\",\r\n" +
+				"                    \"isLocalized\":false\r\n" +
+				"                },\r\n" +
+				"            ],\r\n" +
+				"            \"events\":[]" +
+				"	}";
 		try {
 			return JSONObject.parse(jsonString);
 		} catch (IOException e) {

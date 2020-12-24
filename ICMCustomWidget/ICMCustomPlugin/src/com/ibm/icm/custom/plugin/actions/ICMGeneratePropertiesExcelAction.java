@@ -55,21 +55,43 @@ public class ICMGeneratePropertiesExcelAction extends PluginAction {
 
 	@Override
 	public JSONObject getAdditionalConfiguration(Locale locale) {
-		String jsonString = 
-			"{" +
-			"\"ICM_ACTION_COMPATIBLE\": true," +
-			"\"context\": null," +
-			"\"name\": \"ICM Generate Properties Excel\"," +
-			"\"description\": \"An action to create/generate Properties in excel\"," +
-			"\"properties\": [" +
-				"{" +
-					"\"id\": \"label\"," +
-					"\"title\": \"label\"," +
-					"\"defaultValue\": \"Generate Properties Excel\"," +
-					"\"type\": \"string\"," +
-					"\"isLocalized\": false" +
-				"}" +
-			"]}";
+		String jsonString = "{\r\n" +
+				"	        \"ICM_ACTION_COMPATIBLE\": true,\r\n" +
+				"	        \"context\": null,\r\n" +
+				"            \"name\": \"ICM Generate Properties Excel\",\r\n" +
+				"	    \"description\": \"An action to create/generate Properties in excel\",\r\n" +
+				"            \"properties\": [\r\n" +
+				"                {\r\n" +
+				"                    \"id\": \"label\",\r\n" +
+				"                    \"title\": \"Label\",\r\n" +
+				"                    \"defaultValue\": \"Generate Properties Excel\",\r\n" +
+				"                    \"type\": \"string\",\r\n" +
+				"                    \"isLocalized\":false\r\n" +
+				"                },\r\n" +
+				"                {\r\n" +
+				"                    \"id\": \"targetOS\",\r\n" +
+				"                    \"title\": \"Enter Target OS\",\r\n" +
+				"                    \"defaultValue\": \"\",\r\n" +
+				"                    \"type\": \"string\",\r\n" +
+				"                    \"isLocalized\":false\r\n" +
+				"                },\r\n" +
+				"                {\r\n" +
+				"                    \"id\": \"docClass\",\r\n" +
+				"                    \"title\": \"Enter Document Class\",\r\n" +
+				"                    \"defaultValue\": \"\",\r\n" +
+				"                    \"type\": \"string\",\r\n" +
+				"                    \"isLocalized\":false\r\n" +
+				"                },\r\n" +
+				"                {\r\n" +
+				"                    \"id\": \"folderPath\",\r\n" +
+				"                    \"title\": \"Enter Folder Path\",\r\n" +
+				"                    \"defaultValue\": \"\",\r\n" +
+				"                    \"type\": \"string\",\r\n" +
+				"                    \"isLocalized\":false\r\n" +
+				"                },\r\n" +
+				"            ],\r\n" +
+				"            \"events\":[]" +
+				"	}";
 		try {
 			return JSONObject.parse(jsonString);
 		} catch (IOException e) {
