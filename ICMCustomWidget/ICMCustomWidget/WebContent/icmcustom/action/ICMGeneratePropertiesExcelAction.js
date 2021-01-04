@@ -112,7 +112,7 @@ define([
                 },
                 initializeSearch: function(value) {
 
-                    var ceQuery = "SELECT * FROM ["+documentClass+"] WHERE [DocumentTitle] =" + "'" + value + "'" + " and IsCurrentVersion=true";
+                    var ceQuery = "SELECT * FROM [" + documentClass + "] WHERE [DocumentTitle] =" + "'" + value + "'" + " and IsCurrentVersion=true";
                     this.executeCESearch(targetOS, ceQuery, false, value);
 
                 },
@@ -163,6 +163,9 @@ define([
                     });
                 },
                 onExecute: function() {
+                    var propData = {
+                        items: []
+                    };
                     this.htmlTemplate = this.buildHtmlTemplate1();
                     initiateTaskDialog1 = new BaseDialog({
                         cancelButtonLabel: "Cancel",
@@ -172,120 +175,97 @@ define([
                             dijit.byId('remButton').destroy();
                             dijit.byId('gridDiv').destroy();
                         },
-                        createGrid: function() {
+                        createGridTable: function() {
                             taskLayout = new dijit.layout.TabContainer({
                                 cols: 1,
                                 spacing: 5,
                                 showLabels: true,
                                 orientation: "vert"
                             });
+                            for (var i = 0; i < propData.items.length; i++) {
+                                propData.items[i].id = propData.items[i].name;
+                            }
 
-                            var propData = {
-                                items: []
-                            };
-                            var caseTypes = solution.caseTypes;
-                            var prefix = solution.prefix;
-                            for (var i = 0; i < caseTypes.length; i++) {
-                                if (caseTypes[i].id == caseTypeValue) {
-                                    var propdata_list = caseTypes[i].solution.attributeDefinitions;
-                                    var rows = propdata_list.length;
-                                    for (var i = 0; i < rows; i++) {
-                                        var propSymbolicName = propdata_list[i].symbolicName;
-                                        if (propSymbolicName.includes("_")) {
-                                            var propList = propSymbolicName.split("_");
-                                            if (propList[0] == prefix) {
-                                                propData.items.push(propdata_list[i]);
-                                            }
-                                        }
-                                    }
-
-                                    for (var i = 0; i < propData.items.length; i++) {
-                                        propData.items[i].id = propData.items[i].name;
-                                    }
-
-                                    for (var y = 0; y < propData.items.length; y++) {
-                                        if (propData.items[y].required == true) {
-                                            reqProps.items.push(propData.items[y]);
-                                        } else {
-                                            nonReqProps.items.push(propData.items[y]);
-                                        }
-                                    }
-                                    for (var l = 0; l < propData.items.length; l++) {
-                                        var present = props.findIndex(function(a) {
-                                            return a.includes(propData.items[l].symbolicName)
-                                        });
-                                        if (present >= 0) {
-                                            props[present] = propData.items[l].symbolicName;
-                                        }
-                                    }
-                                    var data = {
-                                        identifier: "id",
-                                        items: []
-                                    };
-                                    var idVal = 0;
-                                    var myNewItem;
-                                    if (props.length == 0) {
-                                        for (var x = 0; x < reqProps.items.length; x++) {
-                                            if (reqProps.items[x].dataType == "xs:timestamp") {
-                                                myNewItem = {
-                                                    id: ++idVal,
-                                                    pname: reqProps.items[x].id,
-                                                    sname: reqProps.items[x].symbolicName,
-                                                    isreq: reqProps.items[x].required,
-                                                    dtype: reqProps.items[x].dataType.replace("xs:timestamp", "datetime")
-                                                };
-                                                data.items.push(myNewItem);
-                                            } else {
-                                                myNewItem = {
-                                                    id: ++idVal,
-                                                    pname: reqProps.items[x].id,
-                                                    sname: reqProps.items[x].symbolicName,
-                                                    isreq: reqProps.items[x].required,
-                                                    dtype: reqProps.items[x].dataType.replace("xs:", "")
-                                                };
-                                                data.items.push(myNewItem);
-                                            }
-                                        }
-                                    } else {
-                                        for (var x = 0; x < reqProps.items.length; x++) {
-                                            if (!props.includes(reqProps.items[x].symbolicName)) {
-                                                props.push(reqProps.items[x]);
-                                            }
-                                        }
-                                        for (var j = 0; j < propData.items.length; j++) {
-                                            if (props.includes(propData.items[j].symbolicName)) {
-                                                if (propData.items[j].dataType == "xs:timestamp") {
-                                                    myNewItem = {
-                                                        id: ++idVal,
-                                                        pname: propData.items[j].id,
-                                                        sname: propData.items[j].symbolicName,
-                                                        isreq: propData.items[j].required,
-                                                        dtype: propData.items[j].dataType.replace("xs:timestamp", "datetime")
-                                                    };
-                                                } else {
-                                                    myNewItem = {
-                                                        id: ++idVal,
-                                                        pname: propData.items[j].id,
-                                                        sname: propData.items[j].symbolicName,
-                                                        isreq: propData.items[j].required,
-                                                        dtype: propData.items[j].dataType.replace("xs:", "")
-                                                    };
-                                                }
-
-
-                                                data.items.push(myNewItem);
-                                            }
-                                        }
-                                    }
-
-
-                                    var stateStore = new Memory({
-                                        data: nonReqProps
-                                    });
-
-
+                            for (var y = 0; y < propData.items.length; y++) {
+                                if (propData.items[y].required == true) {
+                                    reqProps.items.push(propData.items[y]);
+                                } else {
+                                    nonReqProps.items.push(propData.items[y]);
                                 }
                             }
+                            for (var l = 0; l < propData.items.length; l++) {
+                                var present = props.findIndex(function(a) {
+                                    return a.includes(propData.items[l].symbolicName)
+                                });
+                                if (present >= 0) {
+                                    props[present] = propData.items[l].symbolicName;
+                                }
+                            }
+                            var data = {
+                                identifier: "id",
+                                items: []
+                            };
+                            var idVal = 0;
+                            var myNewItem;
+                            if (props.length == 0) {
+                                for (var x = 0; x < reqProps.items.length; x++) {
+                                    if (reqProps.items[x].dataType == "xs:timestamp") {
+                                        myNewItem = {
+                                            id: ++idVal,
+                                            pname: reqProps.items[x].id,
+                                            sname: reqProps.items[x].symbolicName,
+                                            isreq: reqProps.items[x].required,
+                                            dtype: reqProps.items[x].dataType.replace("xs:timestamp", "datetime")
+                                        };
+                                        data.items.push(myNewItem);
+                                    } else {
+                                        myNewItem = {
+                                            id: ++idVal,
+                                            pname: reqProps.items[x].id,
+                                            sname: reqProps.items[x].symbolicName,
+                                            isreq: reqProps.items[x].required,
+                                            dtype: reqProps.items[x].dataType.replace("xs:", "")
+                                        };
+                                        data.items.push(myNewItem);
+                                    }
+                                }
+                            } else {
+                                for (var x = 0; x < reqProps.items.length; x++) {
+                                    if (!props.includes(reqProps.items[x].symbolicName)) {
+                                        props.push(reqProps.items[x]);
+                                    }
+                                }
+                                for (var j = 0; j < propData.items.length; j++) {
+                                    if (props.includes(propData.items[j].symbolicName)) {
+                                        if (propData.items[j].dataType == "xs:timestamp") {
+                                            myNewItem = {
+                                                id: ++idVal,
+                                                pname: propData.items[j].id,
+                                                sname: propData.items[j].symbolicName,
+                                                isreq: propData.items[j].required,
+                                                dtype: propData.items[j].dataType.replace("xs:timestamp", "datetime")
+                                            };
+                                        } else {
+                                            myNewItem = {
+                                                id: ++idVal,
+                                                pname: propData.items[j].id,
+                                                sname: propData.items[j].symbolicName,
+                                                isreq: propData.items[j].required,
+                                                dtype: propData.items[j].dataType.replace("xs:", "")
+                                            };
+                                        }
+
+
+                                        data.items.push(myNewItem);
+                                    }
+                                }
+                            }
+
+
+                            var stateStore = new Memory({
+                                data: nonReqProps
+                            });
+
 
                             var node = dom.byId("addButton");
                             on(node, "click", function() {
@@ -419,6 +399,30 @@ define([
                             grid.sort();
                             grid.startup();
                         },
+                        getCaseTypePropData: function() {
+                            var caseTypes = solution.caseTypes;
+                            var prefix = solution.prefix;
+                            for (var i = 0; i < caseTypes.length; i++) {
+                                if (caseTypes[i].id == caseTypeValue) {
+                                    caseTypes[i].retrieveAttributeDefinitions(lang.hitch(this, function(retrievedAttributes) {
+                                        var rows = retrievedAttributes.length;
+                                        for (var i = 0; i < rows; i++) {
+                                            var propSymbolicName = retrievedAttributes[i].symbolicName;
+                                            if (propSymbolicName.includes("_")) {
+                                                var propList = propSymbolicName.split("_");
+                                                if (propList[0] == prefix) {
+                                                    propData.items.push(retrievedAttributes[i]);
+                                                }
+                                            }
+                                            if (i == (rows - 1)) {
+                                                this.createGridTable();
+                                            }
+                                        }
+                                    }));
+
+                                }
+                            }
+                        },
                         onSave: function() {
                             var value = [];
                             var temp = "";
@@ -463,38 +467,10 @@ define([
                                 },
                                 onComplete: completed
                             });
-                            //value.push(temp);
-                            /*var tab_text = "<tr>";
-                            var textRange;
-                            var j = 0;/
-                            value = value.replace(/,\s*$/, "");
-                            var gridData = value.split(",");
-                            for (j = 0; j < gridData.length; j++) {
-                                tab_text = tab_text + "<td>" + gridData[j] + "</td>";
 
-                            }
-                            tab_text = tab_text + "</tr>";
-
-                            var D = document;
-                            var a = D.createElement('a');
-                            var rawFile;
-                            var ctx = {
-                                table: tab_text
-                            };*/
                             var fileName = caseTypeValue;
                             fileName = fileName + ".xlsx";
 
-                            /*if ('download' in a) {
-                                var template = '<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><xml><x:ExcelWorkbook><x:ExcelWorksheets><x:ExcelWorksheet><x:Name>Template</x:Name><x:WorksheetOptions><x:Panes></x:Panes></x:WorksheetOptions></x:ExcelWorksheet></x:ExcelWorksheets></x:ExcelWorkbook></xml></head><body><table cellspacing="0" rules="rows">{table}</table></body></html>';
-                                var format = function(s, c) {
-                                    return s.replace(/{(\w+)}/g, function(m, p) {
-                                        return c[p];
-                                    })
-                                };
-                                var blob = new Blob([format(template, ctx)], {
-                                    type: 'application/vnd.ms-excel',
-                                    endings: 'native'
-                                });*/
                             var wb = xlsx.utils.book_new();
 
                             wb.SheetNames.push("Template", "Read Me");
@@ -644,7 +620,7 @@ define([
 
                     });
                     initiateTaskDialog1.setTitle(caseTypeValue);
-                    initiateTaskDialog1.createGrid();
+                    initiateTaskDialog1.getCaseTypePropData();
                     // initiateTaskDialog1.setSize(600, 500);
                     initiateTaskDialog1.addButton("Save Template", initiateTaskDialog1.onSave, false, false);
                     //initiateTaskDialog1.setResizable(true);
