@@ -232,7 +232,7 @@ define([
                             } else {
                                 for (var x = 0; x < reqProps.items.length; x++) {
                                     if (!props.includes(reqProps.items[x].symbolicName)) {
-                                        props.push(reqProps.items[x]);
+                                        props.push(reqProps.items[x].symbolicName);
                                     }
                                 }
                                 for (var j = 0; j < propData.items.length; j++) {
